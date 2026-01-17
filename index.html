@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPR Simulation Timer</title>
+    <style>
+        :root {
+            --color-primary: #208491;
+            --color-primary-hover: #1a6a73;
+            --color-primary-active: #155a63;
+            --color-text: #1f2121;
+            --color-text-secondary: #627c7f;
+            --color-bg: #fcfcf9;
+            --color-surface: #ffffff;
+            --color-border: #e0e0dc;
+            --color-error: #c0152f;
+            --color-success: #208491;
+            --focus-ring: 0 0 0 3px rgba(32, 132, 145, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+
+        body {
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Start Screen */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .start-screen, .timer-screen, .admin-screen {
+            background: var(--color-surface);
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--color-text);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            transition: border-color 150ms;
+        }
+
+        .form-control:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 0;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        .form-group-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms;
+            text-decoration: none;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: #ffffff;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-primary:active {
+            background: var(--color-primary-active);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: #efefef;
+        }
+
+        .btn-danger {
+            background: var(--color-error);
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #a01228;
+        }
+
+        /* Timer Screen */
+        .timer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .timer-info {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .timer-display {
+            font-size: 72px;
+            font-weight: 600;
+            color: var(--color-primary);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .actions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: var(--color-surface);
+        }
+
+        .actions-table thead {
+            background: #f9f9f7;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .actions-table th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--color-text);
+        }
+
+        .actions-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .actions-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .action-name {
+            font-weight: 500;
+            width: 60%;
+            font-size: 24px;
+        }
+
+        .action-time {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 24px;
+            color: var(--color-primary);
+            width: 20%;
+            text-align: center;
+        }
+
+        .action-button {
+            width: 20%;
+            text-align: center;
+        }
+
+        .btn-action {
+            padding: 10px 16px;
+            font-size: 14px;
+            background: var(--color-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+
+        .btn-action:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-action.recorded {
+            background: var(--color-success);
+            cursor: default;
+        }
+
+        .btn-action:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        .action-row-recorded .action-name {
+            color: var(--color-text-secondary);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .controls .btn {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        /* Admin Panel */
+        .admin-login {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .admin-content {
+            display: none;
+        }
+
+        .admin-content.active {
+            display: block;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .admin-tab {
+            padding: 10px 15px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 150ms;
+        }
+
+        .admin-tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .admin-tab-content {
+            display: none;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        .action-list-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f9f9f7;
+            border-radius: 4px;
+            align-items: center;
+        }
+
+        .action-list-item input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .action-list-item button {
+            padding: 6px 12px;
+            background: var(--color-error);
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .action-list-item button:hover {
+            background: #a01228;
+        }
+
+        .add-action {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .add-action input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .add-action button {
+            padding: 8px 16px;
+            background: var(--color-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .add-action button:hover {
+            background: var(--color-primary-hover);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--color-surface);
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--color-text);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 150ms;
+        }
+
+        .modal-btn-confirm {
+            background: var(--color-primary);
+            color: #ffffff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f5;
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #efefef;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .start-screen, .timer-screen, .admin-screen {
+                padding: 15px;
+                border-radius: 6px;
+            }
+
+            .title {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+
+            .form-group-row {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-display {
+                font-size: 32px;
+                letter-spacing: 1px;
+            }
+
+            .timer-header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 20px;
+            }
+
+            .timer-header > div:last-child {
+                width: 100%;
+                text-align: right;
+                margin-top: 15px;
+            }
+
+            .actions-table {
+                font-size: 11px;
+                margin-bottom: 15px;
+            }
+
+            .actions-table th, .actions-table td {
+                padding: 6px 4px;
+            }
+
+            .action-name {
+                width: 55%;
+                word-break: break-word;
+            }
+
+            .action-time {
+                width: 20%;
+                font-size: 12px;
+            }
+
+            .action-button {
+                width: 25%;
+                padding: 0 2px;
+            }
+
+            .btn-action {
+                padding: 4px 8px;
+                font-size: 11px;
+                width: 100%;
+            }
+
+            .admin-tabs {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .admin-tab {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .form-control {
+                padding: 8px 10px;
+                font-size: 16px;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .modal-content {
+                width: 90vw;
+                max-width: 350px;
+                padding: 20px;
+            }
+
+            .modal-title {
+                font-size: 16px;
+            }
+        }
+
+        /* Extra small devices (phones) */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .start-screen, .timer-screen, .admin-screen {
+                padding: 12px;
+                border-radius: 4px;
+            }
+
+            .title {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .timer-display {
+                font-size: 28px;
+                letter-spacing: 0.5px;
+            }
+
+            .actions-table {
+                font-size: 10px;
+                margin-bottom: 12px;
+            }
+
+            .actions-table th, .actions-table td {
+                padding: 5px 3px;
+            }
+
+            .action-name {
+                word-break: break-word;
+                font-size: 10px;
+            }
+
+            .btn-action {
+                padding: 3px 6px;
+                font-size: 10px;
+                width: 100%;
+            }
+
+            .form-label {
+                font-size: 13px;
+            }
+
+            .form-control {
+                padding: 10px;
+                font-size: 16px;
+            }
+
+            .controls .btn {
+                max-width: none;
+                width: 100%;
+            }
+
+            .modal-content {
+                width: 95vw;
+                max-width: 300px;
+                padding: 15px;
+            }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: rgba(32, 132, 145, 0.1);
+            color: var(--color-success);
+            border: 1px solid rgba(32, 132, 145, 0.3);
+        }
+
+        .alert-error {
+            background: rgba(192, 21, 47, 0.1);
+            color: var(--color-error);
+            border: 1px solid rgba(192, 21, 47, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen active">
+            <div class="start-screen">
+                <h1 class="title">CPR Simulation Timer</h1>
+                
+                <div class="form-group">
+                    <label class="form-label">Select Role</label>
+                    <select id="roleSelect" class="form-control">
+                        <option value="">-- Choose Role --</option>
+                        <option value="emergency_physician">Emergency Physician</option>
+                        <option value="nurse_led">Nurse-Led</option>
+                    </select>
+                </div>
+
+                <div id="arrestTypeGroup" class="form-group" style="display: none;">
+                    <label class="form-label">Arrest Type</label>
+                    <select id="arrestTypeSelect" class="form-control">
+                        <option value="">-- Choose Arrest Type --</option>
+                        <option value="vf_pvt">VF/pVT</option>
+                        <option value="asystole_pea">Asystole/PEA</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Simulation Number</label>
+                    <input type="text" id="simulationNumber" class="form-control" placeholder="e.g., SIM-001" required>
+                </div>
+
+                <button class="btn btn-primary" onclick="startSimulation()">Start CPR</button>
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <button class="btn btn-secondary" onclick="showAdminLogin()" style="width: 200px;">Admin Access</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer Screen -->
+        <div id="timerScreen" class="screen">
+            <div class="timer-screen">
+                <div class="timer-header">
+                    <div>
+                        <div class="timer-info">Simulation: <strong id="displaySimNumber"></strong></div>
+                        <div class="timer-info">Role: <strong id="displayRole"></strong></div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="timer-display" id="timerDisplay">00:00</div>
+                        <div class="timer-info">Elapsed Time</div>
+                    </div>
+                </div>
+
+                <table class="actions-table">
+                    <thead>
+                        <tr>
+                            <th class="action-name">Action</th>
+                            <th class="action-time">Time (MM:SS)</th>
+                            <th class="action-button">Record</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actionsTableBody">
+                    </tbody>
+                </table>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="endSimBtn" onclick="endSimulation()" style="max-width: none;">End Simulation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Screen -->
+        <div id="adminScreen" class="screen">
+            <div class="admin-screen">
+                <div id="adminLogin" class="admin-login">
+                    <h1 class="title">Admin Access</h1>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="adminUsername" class="form-control" placeholder="Username">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="adminPassword" class="form-control" placeholder="Password">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="adminLogin()">Login</button>
+                    <button class="btn btn-secondary" onclick="backToStart()" style="margin-top: 10px;">Back</button>
+                </div>
+
+                <div id="adminContent" class="admin-content">
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-secondary" onclick="adminLogout()" style="width: 200px;">Logout</button>
+                    </div>
+
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" onclick="switchAdminTab('ep')">Emergency Physician</button>
+                        <button class="admin-tab" onclick="switchAdminTab('nl_vf')">Nurse-Led VF/pVT</button>
+                        <button class="admin-tab" onclick="switchAdminTab('nl_asy')">Nurse-Led Asystole/PEA</button>
+                    </div>
+
+                    <div id="ep-tab" class="admin-tab-content active">
+                        <h3 style="margin-top: 0;">Emergency Physician Actions</h3>
+                        <div id="epActionsList" class="action-list"></div>
+                        <div class="add-action">
+                            <input type="text" id="epNewAction" placeholder="New action name">
+                            <button onclick="addAction('ep')">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="nl_vf-tab" class="admin-tab-content">
+                        <h3 style="margin-top: 0;">Nurse-Led VF/pVT Actions</h3>
+                        <div id="nlVfActionsList" class="action-list"></div>
+                        <div class="add-action">
+                            <input type="text" id="nlVfNewAction" placeholder="New action name">
+                            <button onclick="addAction('nl_vf')">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="nl_asy-tab" class="admin-tab-content">
+                        <h3 style="margin-top: 0;">Nurse-Led Asystole/PEA Actions</h3>
+                        <div id="nlAsyActionsList" class="action-list"></div>
+                        <div class="add-action">
+                            <input type="text" id="nlAsyNewAction" placeholder="New action name">
+                            <button onclick="addAction('nl_asy')">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Generated Modal -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Simulation Completed</h2>
+            <p style="margin: 0; color: var(--color-text-secondary); font-size: 14px;">PDF has been generated.</p>
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="form-label">Email Report (Optional)</label>
+                <input type="email" id="emailInput" class="form-control" placeholder="your.email@example.com">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn-confirm" onclick="sendEmailReport()" style="background: var(--color-primary);">Send via Email</button>
+                <button class="modal-btn-confirm" onclick="returnToStart()">Skip & Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default action lists
+        const defaultActions = {
+            emergency_physician: [
+                "Start chest compressions",
+                "Attach defibrillator/monitor",
+                "Rhythm diagnosis",
+                "First shock",
+                "Activate metronome",
+                "Correct ineffective compressions",
+                "Assign team member to IV/IO access",
+                "Assign team member to medications",
+                "Rhythm diagnosis 2",
+                "Compress change 2",
+                "Second shock",
+                "Administer epinephrine 1",
+                "Rhythm diagnosis 3",
+                "Compress change 3",
+                "Third shock",
+                "Administer amiodarone 1",
+                "Rhythm diagnosis 4",
+                "Compress change 4",
+                "Fourth shock",
+                "Administer epinephrine 2",
+                "Rhythm diagnosis 5",
+                "Compress change 5",
+                "Fifth shock",
+                "Administer amiodarone 2"
+            ],
+            nurse_led_vf_pvt: [
+                "Start chest compressions",
+                "Attach defibrillator/monitor",
+                "Rhythm diagnosis",
+                "First shock",
+                "Activate metronome",
+                "Correct ineffective compressions",
+                "Assign team member to IV/IO access",
+                "Assign team member to medications",
+                "Rhythm diagnosis 2",
+                "Compress change 2",
+                "Second shock",
+                "Administer epinephrine 1",
+                "Rhythm diagnosis 3",
+                "Compress change 3",
+                "Third shock",
+                "Administer amiodarone 1",
+                "Rhythm diagnosis 4",
+                "Compress change 4",
+                "Fourth shock",
+                "Administer epinephrine 2",
+                "Rhythm diagnosis 5",
+                "Compress change 5",
+                "Fifth shock",
+                "Administer amiodarone 2"
+            ],
+            nurse_led_asystole_pea: [
+                "Start chest compressions",
+                "Attach defibrillator/monitor",
+                "Rhythm diagnosis",
+                "Activate metronome",
+                "Correct ineffective compressions",
+                "Assign team member to IV/IO access",
+                "Assign team member to medications",
+                "Rhythm diagnosis 2",
+                "Compress change 2",
+                "Administer epinephrine 1",
+                "Rhythm diagnosis 3",
+                "Compress change 3",
+                "Rhythm diagnosis 4",
+                "Compress change 4",
+                "Administer epinephrine 2"
+            ]
+        };
+
+        // State
+        let currentState = {
+            role: null,
+            arrestType: null,
+            simulationNumber: null,
+            startTime: null,
+            actionTimes: {},
+            actions: []
+        };
+
+        let adminLoggedIn = false;
+        let timerInterval = null;
+        let generatedPdfBlob = null;
+
+        function loadActions() {
+            const stored = localStorage.getItem('actionLists');
+            if (!stored) {
+                localStorage.setItem('actionLists', JSON.stringify(defaultActions));
+            }
+        }
+
+        function getActions(role, arrestType) {
+            const stored = JSON.parse(localStorage.getItem('actionLists')) || defaultActions;
+            if (role === 'emergency_physician') {
+                return stored.emergency_physician || defaultActions.emergency_physician;
+            } else if (role === 'nurse_led') {
+                if (arrestType === 'vf_pvt') {
+                    return stored.nurse_led_vf_pvt || defaultActions.nurse_led_vf_pvt;
+                } else if (arrestType === 'asystole_pea') {
+                    return stored.nurse_led_asystole_pea || defaultActions.nurse_led_asystole_pea;
+                }
+            }
+            return [];
+        }
+
+        function startSimulation() {
+            const role = document.getElementById('roleSelect').value;
+            const arrestType = document.getElementById('arrestTypeSelect').value;
+            const simNumber = document.getElementById('simulationNumber').value;
+
+            if (!role) {
+                alert('Please select a role');
+                return;
+            }
+
+            if (role === 'nurse_led' && !arrestType) {
+                alert('Please select arrest type');
+                return;
+            }
+
+            if (!simNumber) {
+                alert('Please enter simulation number');
+                return;
+            }
+
+            currentState.role = role;
+            currentState.arrestType = arrestType;
+            currentState.simulationNumber = simNumber;
+            currentState.startTime = Date.now();
+            currentState.actionTimes = {};
+            currentState.actions = getActions(role, arrestType);
+            generatedPdfBlob = null;
+
+            setTimeout(() => {
+                renderTimerScreen();
+                switchScreen('timerScreen');
+                startTimer();
+            }, 100);
+        }
+
+        function renderTimerScreen() {
+            document.getElementById('displaySimNumber').textContent = currentState.simulationNumber;
+            const roleDisplay = currentState.role === 'emergency_physician' ? 'Emergency Physician' : 
+                                `Nurse-Led (${currentState.arrestType === 'vf_pvt' ? 'VF/pVT' : 'Asystole/PEA'})`;
+            document.getElementById('displayRole').textContent = roleDisplay;
+
+            const tbody = document.getElementById('actionsTableBody');
+            tbody.innerHTML = '';
+
+            currentState.actions.forEach((action, index) => {
+                const tr = document.createElement('tr');
+                tr.id = `action-row-${index}`;
+                tr.innerHTML = `
+                    <td class="action-name">${action}</td>
+                    <td class="action-time"><span id="time-${index}">--:--</span></td>
+                    <td class="action-button">
+                        <button class="btn-action" id="btn-${index}" onclick="recordTime(${index})">Record</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - currentState.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timerDisplay').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 100);
+        }
+
+        function recordTime(index) {
+            const elapsed = Math.floor((Date.now() - currentState.startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            currentState.actionTimes[index] = timeStr;
+
+            document.getElementById(`time-${index}`).textContent = timeStr;
+            const btn = document.getElementById(`btn-${index}`);
+            btn.textContent = 'Recorded';
+            btn.classList.add('recorded');
+            btn.disabled = true;
+
+            document.getElementById(`action-row-${index}`).classList.add('action-row-recorded');
+        }
+
+        function endSimulation() {
+            generateReport();
+        }
+
+        function generateReport() {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = function() {
+                const element = document.createElement('div');
+                element.style.width = '210mm';
+                element.style.height = '297mm';
+                element.style.padding = '20mm';
+                element.style.fontFamily = 'Arial, sans-serif';
+                element.style.fontSize = '12px';
+                element.style.lineHeight = '1.6';
+                
+                let html = '<h1 style="font-size: 24px; margin-bottom: 15px;">CPR SIMULATION REPORT</h1>';
+                html += `<p style="margin: 8px 0;"><strong>Simulation Number:</strong> ${currentState.simulationNumber}</p>`;
+                
+                const roleText = currentState.role === 'emergency_physician' ? 'Emergency Physician' : 
+                                 `Nurse-Led (${currentState.arrestType === 'vf_pvt' ? 'VF/pVT' : 'Asystole/PEA'})`;
+                html += `<p style="margin: 8px 0;"><strong>Role:</strong> ${roleText}</p>`;
+                
+                const now = new Date();
+                html += `<p style="margin: 8px 0; margin-bottom: 20px;"><strong>Date:</strong> ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>`;
+                
+                html += '<h2 style="font-size: 16px; margin: 15px 0 10px 0;">Actions and Times</h2>';
+                html += '<table style="width:100%; border-collapse: collapse; font-size: 11px;">';
+                html += '<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: bold;">Action</th><th style="border: 1px solid #ddd; padding: 6px; text-align: center; font-weight: bold;">Time</th></tr>';
+                
+                currentState.actions.forEach((action, index) => {
+                    const timeStr = currentState.actionTimes[index] || '--:--';
+                    html += `<tr><td style="border: 1px solid #ddd; padding: 6px;">${action}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${timeStr}</td></tr>`;
+                });
+                
+                html += '</table>';
+                element.innerHTML = html;
+                
+                const opt = {
+                    margin: 0,
+                    filename: `CPR_Simulation_${currentState.simulationNumber}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                };
+                
+                html2pdf().set(opt).from(element).outputPdf('blob').then((pdfBlob) => {
+                    generatedPdfBlob = pdfBlob;
+                    showCompletionModal();
+                }).catch((error) => {
+                    console.error('PDF generation error:', error);
+                    generateTextReport();
+                });
+            };
+            script.onerror = function() {
+                console.error('Failed to load html2pdf library');
+                generateTextReport();
+                return;
+            };
+            document.head.appendChild(script);
+        }
+
+        function generateTextReport() {
+            let report = 'CPR SIMULATION REPORT\n';
+            report += '=====================\n\n';
+            report += `Simulation Number: ${currentState.simulationNumber}\n`;
+            
+            const roleText = currentState.role === 'emergency_physician' ? 'Emergency Physician' : 
+                             `Nurse-Led (${currentState.arrestType === 'vf_pvt' ? 'VF/pVT' : 'Asystole/PEA'})`;
+            report += `Role: ${roleText}\n`;
+            
+            const now = new Date();
+            report += `Date: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}\n\n`;
+            
+            report += 'ACTIONS AND TIMES\n';
+            report += '-----------------\n';
+            currentState.actions.forEach((action, index) => {
+                const timeStr = currentState.actionTimes[index] || '--:--';
+                report += `${index + 1}. ${action}: ${timeStr}\n`;
+            });
+            
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CPR_Simulation_${currentState.simulationNumber}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showCompletionModal();
+            }, 100);
+        }
+        
+        function showCompletionModal() {
+            document.getElementById('pdfModal').classList.add('active');
+            document.getElementById('emailInput').value = '';
+        }
+
+        function sendEmailReport() {
+            const email = document.getElementById('emailInput').value.trim();
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            const doSend = (pdfBlob) => {
+                if (!pdfBlob) {
+                    alert('Error preparing PDF. Please try again.');
+                    return;
+                }
+                sendPDFByEmail(email, pdfBlob);
+            };
+
+            if (generatedPdfBlob) {
+                doSend(generatedPdfBlob);
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = function() {
+                const element = document.createElement('div');
+                element.style.width = '210mm';
+                element.style.height = '297mm';
+                element.style.padding = '20mm';
+                element.style.fontFamily = 'Arial, sans-serif';
+                element.style.fontSize = '12px';
+                element.style.lineHeight = '1.6';
+                
+                let html = '<h1 style="font-size: 24px; margin-bottom: 15px;">CPR SIMULATION REPORT</h1>';
+                html += `<p style="margin: 8px 0;"><strong>Simulation Number:</strong> ${currentState.simulationNumber}</p>`;
+                
+                const roleText = currentState.role === 'emergency_physician' ? 'Emergency Physician' : 
+                                 `Nurse-Led (${currentState.arrestType === 'vf_pvt' ? 'VF/pVT' : 'Asystole/PEA'})`;
+                html += `<p style="margin: 8px 0;"><strong>Role:</strong> ${roleText}</p>`;
+                
+                const now = new Date();
+                html += `<p style="margin: 8px 0; margin-bottom: 20px;"><strong>Date:</strong> ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>`;
+                
+                html += '<h2 style="font-size: 16px; margin: 15px 0 10px 0;">Actions and Times</h2>';
+                html += '<table style="width:100%; border-collapse: collapse; font-size: 11px;">';
+                html += '<tr style="background-color: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 6px; text-align: left; font-weight: bold;">Action</th><th style="border: 1px solid #ddd; padding: 6px; text-align: center; font-weight: bold;">Time</th></tr>';
+                
+                currentState.actions.forEach((action, index) => {
+                    const timeStr = currentState.actionTimes[index] || '--:--';
+                    html += `<tr><td style="border: 1px solid #ddd; padding: 6px;">${action}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${timeStr}</td></tr>`;
+                });
+                
+                html += '</table>';
+                element.innerHTML = html;
+                
+                const opt = {
+                    margin: 0,
+                    filename: `CPR_Simulation_${currentState.simulationNumber}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                };
+                
+                html2pdf().set(opt).from(element).outputPdf('blob').then((pdfBlob) => {
+                    generatedPdfBlob = pdfBlob;
+                    doSend(pdfBlob);
+                }).catch((error) => {
+                    console.error('PDF generation error:', error);
+                    alert('Error generating PDF');
+                });
+            };
+            document.head.appendChild(script);
+        }
+        
+        function sendPDFByEmail(email, pdfBlob) {
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('pdf', pdfBlob, `CPR_Simulation_${currentState.simulationNumber}.pdf`);
+            formData.append('simNumber', currentState.simulationNumber);
+            
+            fetch('https://formspree.io/f/xzbjbpqd', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Report sent successfully to ' + email + '!');
+                    returnToStart();
+                } else {
+                    throw new Error('Server error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Unable to send via email service. Please download the report and send it manually.');
+                returnToStart();
+            });
+        }
+
+        function returnToStart() {
+            document.getElementById('pdfModal').classList.remove('active');
+            backToStart();
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function backToStart() {
+            if (timerInterval) clearInterval(timerInterval);
+            switchScreen('startScreen');
+            document.getElementById('roleSelect').value = '';
+            document.getElementById('arrestTypeSelect').value = '';
+            document.getElementById('simulationNumber').value = '';
+            document.getElementById('arrestTypeGroup').style.display = 'none';
+        }
+
+        function showAdminLogin() {
+            switchScreen('adminScreen');
+            document.getElementById('adminLogin').style.display = 'block';
+            document.getElementById('adminContent').classList.remove('active');
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function adminLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            if (username === 'yovelyos' && password === 'Yovel216') {
+                adminLoggedIn = true;
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminContent').classList.add('active');
+                renderAdminTabs();
+            } else {
+                alert('Invalid credentials');
+            }
+        }
+
+        function adminLogout() {
+            adminLoggedIn = false;
+            showAdminLogin();
+        }
+
+        function renderAdminTabs() {
+            const tabs = {
+                ep: { key: 'emergency_physician', elementId: 'epActionsList' },
+                nl_vf: { key: 'nurse_led_vf_pvt', elementId: 'nlVfActionsList' },
+                nl_asy: { key: 'nurse_led_asystole_pea', elementId: 'nlAsyActionsList' }
+            };
+
+            Object.entries(tabs).forEach(([tabKey, { key, elementId }]) => {
+                const stored = JSON.parse(localStorage.getItem('actionLists')) || defaultActions;
+                const actions = stored[key] || defaultActions[key] || [];
+                const container = document.getElementById(elementId);
+                container.innerHTML = '';
+
+                actions.forEach((action, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'action-list-item';
+                    item.innerHTML = `
+                        <input type="text" value="${action}" onchange="updateAction('${key}', ${index}, this.value)">
+                        <button onclick="deleteAction('${key}', ${index})">Delete</button>
+                    `;
+                    container.appendChild(item);
+                });
+            });
+        }
+
+        function updateAction(key, index, value) {
+            const stored = JSON.parse(localStorage.getItem('actionLists')) || defaultActions;
+            if (!stored[key]) stored[key] = defaultActions[key];
+            stored[key][index] = value;
+            localStorage.setItem('actionLists', JSON.stringify(stored));
+            renderAdminTabs();
+        }
+
+        function deleteAction(key, index) {
+            const stored = JSON.parse(localStorage.getItem('actionLists')) || defaultActions;
+            if (!stored[key]) stored[key] = defaultActions[key];
+            stored[key].splice(index, 1);
+            localStorage.setItem('actionLists', JSON.stringify(stored));
+            renderAdminTabs();
+        }
+
+        function addAction(tabKey) {
+            const keyMap = {
+                ep: 'emergency_physician',
+                nl_vf: 'nurse_led_vf_pvt',
+                nl_asy: 'nurse_led_asystole_pea'
+            };
+            const key = keyMap[tabKey];
+            const inputId = tabKey === 'ep' ? 'epNewAction' : 
+                           tabKey === 'nl_vf' ? 'nlVfNewAction' : 'nlAsyNewAction';
+            
+            const newAction = document.getElementById(inputId).value.trim();
+            if (!newAction) {
+                alert('Please enter action name');
+                return;
+            }
+
+            const stored = JSON.parse(localStorage.getItem('actionLists')) || defaultActions;
+            if (!stored[key]) stored[key] = defaultActions[key];
+            stored[key].push(newAction);
+            localStorage.setItem('actionLists', JSON.stringify(stored));
+            document.getElementById(inputId).value = '';
+            renderAdminTabs();
+        }
+
+        function switchAdminTab(tabKey) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabKey}-tab`).classList.add('active');
+        }
+
+        loadActions();
+        document.getElementById('roleSelect').addEventListener('change', function() {
+            const arrestTypeGroup = document.getElementById('arrestTypeGroup');
+            if (this.value === 'nurse_led') {
+                arrestTypeGroup.style.display = 'block';
+            } else {
+                arrestTypeGroup.style.display = 'none';
+                document.getElementById('arrestTypeSelect').value = '';
+            }
+        });
+    </script>
+</body>
+</html>
